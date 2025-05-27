@@ -23,6 +23,7 @@ export class Animator {
       ease?: string;
       duration?: number;
       delay?: number;
+      opacity?: number;
     } = {},
   ): Promise<void> {
     const {
@@ -30,6 +31,7 @@ export class Animator {
       duration = 0.5,
       delay = 0,
       scale = 0.8,
+      opacity = 1,
     } = options;
     const elements = Array.isArray(targets) ? targets : [targets];
 
@@ -60,7 +62,7 @@ export class Animator {
 
       for (const element of elements) {
         timeline
-          .to(element, { opacity: 1, ease: "power1.inOut", duration }, 0)
+          .to(element, { opacity, ease: "power1.inOut", duration }, 0)
           .to(element.micro, targetMicro, 0);
       }
     });
