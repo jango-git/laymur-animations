@@ -38,9 +38,10 @@ export class Animator {
     const targetMicro = {
       ease,
       duration,
+      scaleX: 1,
+      scaleY: 1,
       ...(options.x && { x: 0 }),
       ...(options.y && { y: 0 }),
-      ...(options.scale && { scaleX: 1, scaleY: 1 }),
     };
 
     for (const el of elements) {
@@ -56,6 +57,47 @@ export class Animator {
       }
       el.opacity = 0;
     }
+
+    return new Promise((resolve) => {
+      const timeline = gsap.timeline({ onComplete: resolve, delay });
+
+      for (const element of elements) {
+        timeline
+          .to(element, { opacity, ease: "power1.inOut", duration }, 0)
+          .to(element.micro, targetMicro, 0);
+      }
+    });
+  }
+
+  public static disappear(
+    targets: AnimatedElement | AnimatedElement[],
+    options: {
+      x?: number;
+      y?: number;
+      scale?: number;
+      ease?: string;
+      duration?: number;
+      delay?: number;
+      opacity?: number;
+    } = {},
+  ): Promise<void> {
+    const {
+      ease = "back.in(1.7)",
+      duration = 0.5,
+      delay = 0,
+      scale = 0.8,
+      opacity = 0,
+    } = options;
+    const elements = Array.isArray(targets) ? targets : [targets];
+
+    const targetMicro = {
+      ease,
+      duration,
+      scaleX: scale,
+      scaleY: scale,
+      ...(options.x && { x: options.x }),
+      ...(options.y && { y: options.y }),
+    };
 
     return new Promise((resolve) => {
       const timeline = gsap.timeline({ onComplete: resolve, delay });
