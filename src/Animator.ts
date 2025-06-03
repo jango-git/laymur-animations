@@ -249,7 +249,10 @@ export class Animator {
     }
   }
 
-  public static stopPulse(targets: AnimatedElement | AnimatedElement[]): void {
+  public static stopPulse(
+    targets: AnimatedElement | AnimatedElement[],
+    options: { duration?: number } = {},
+  ): void {
     const elements = Array.isArray(targets) ? targets : [targets];
 
     for (const element of elements) {
@@ -261,7 +264,7 @@ export class Animator {
         gsap.to(element.micro, {
           scaleX: 1,
           scaleY: 1,
-          duration: 0.25,
+          duration: options.duration ?? 0.25,
           ease: "power1.out",
         });
       }
@@ -317,7 +320,10 @@ export class Animator {
     }
   }
 
-  public static stopShake(targets: AnimatedElement | AnimatedElement[]): void {
+  public static stopShake(
+    targets: AnimatedElement | AnimatedElement[],
+    options: { duration?: number } = {},
+  ): void {
     const elements = Array.isArray(targets) ? targets : [targets];
 
     for (const element of elements) {
@@ -329,7 +335,7 @@ export class Animator {
         gsap.to(element.micro, {
           x: 0,
           y: 0,
-          duration: 0.25,
+          duration: options.duration ?? 0.25,
           ease: "power1.out",
         });
       }
@@ -389,6 +395,7 @@ export class Animator {
 
   public static stopCallToClick(
     targets: AnimatedElement | AnimatedElement[],
+    options: { duration?: number } = {},
   ): void {
     const elements = Array.isArray(targets) ? targets : [targets];
 
@@ -400,7 +407,7 @@ export class Animator {
 
         gsap.to(element.micro, {
           y: 0,
-          duration: 0.25,
+          duration: options.duration ?? 0.25,
           ease: "power1.out",
         });
       }
@@ -480,6 +487,7 @@ export class Animator {
 
   public static stopCallToClickSpin(
     targets: AnimatedElement | AnimatedElement[],
+    options: { duration?: number } = {},
   ): void {
     const elements = Array.isArray(targets) ? targets : [targets];
 
@@ -491,7 +499,7 @@ export class Animator {
 
         gsap.to(element.micro, {
           angle: 0,
-          duration: 0.25,
+          duration: options.duration ?? 0.25,
           ease: "power1.out",
         });
       }

@@ -1,10 +1,11 @@
 {
   "name": "laymur-animations",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && rollup -c"
+    "build": "npm run clean && rollup -c",
+    "prepublishOnly": "npm run build"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
