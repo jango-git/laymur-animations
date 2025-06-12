@@ -1,6 +1,6 @@
 {
   "name": "laymur-animations",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "",
   "scripts": {
     "clean": "rm -rf dist",
@@ -30,7 +30,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "gsap": "^3.13.0"
+    "gsap": ">=3.13.0"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.1",
