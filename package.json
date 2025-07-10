@@ -1,6 +1,6 @@
 {
   "name": "laymur-animations",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "",
   "scripts": {
     "clean": "rm -rf dist",
@@ -35,7 +35,6 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/three": "^0.176.0",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",
     "eslint": "^9.26.0",
