@@ -1,6 +1,6 @@
 {
   "name": "laymur-animations",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Standard animations for Laymur UI library",
   "scripts": {
     "clean": "rm -rf dist",
@@ -42,6 +42,7 @@
   },
   "type": "module",
   "peerDependencies": {
+    "laymur": ">=0.2.0 <0.3.0",
     "gsap": ">=3.13.0 <4.0.0"
   },
   "devDependencies": {
