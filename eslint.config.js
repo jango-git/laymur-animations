@@ -3,7 +3,7 @@ import tsParser from "@typescript-eslint/parser";
 
 export default [
   {
-    files: ["src/**/*.ts", "src/**/*.tsx"],
+    files: ["src/**/*.ts"],
     ignores: ["dist/**", "node_modules/**"],
     languageOptions: {
       parser: tsParser,
@@ -17,11 +17,40 @@ export default [
       "@typescript-eslint": tsPlugin,
     },
     rules: {
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": [
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": "error",
+      "@typescript-eslint/unified-signatures": "error",
+      "@typescript-eslint/switch-exhaustiveness-check": "error",
+      "@typescript-eslint/strict-boolean-expressions": "error",
+      "@typescript-eslint/restrict-plus-operands": "error",
+      "@typescript-eslint/prefer-return-this-type": "error",
+      "@typescript-eslint/prefer-regexp-exec": "error",
+      "@typescript-eslint/prefer-literal-enum-member": "error",
+      "@typescript-eslint/prefer-find": "error",
+      "@typescript-eslint/prefer-enum-initializers": "error",
+      "@typescript-eslint/no-wrapper-object-types": "error",
+      "@typescript-eslint/no-unsafe-function-type": "error",
+      "@typescript-eslint/no-unsafe-enum-comparison": "error",
+      "@typescript-eslint/no-unnecessary-type-conversion": "error",
+      "@typescript-eslint/no-unnecessary-type-constraint": "error",
+      "@typescript-eslint/no-unnecessary-template-expression": "error",
+      "@typescript-eslint/no-unnecessary-qualifier": "error",
+      "@typescript-eslint/no-unnecessary-parameter-property-assignment":
         "error",
-        { argsIgnorePattern: "^_" },
-      ],
+      "@typescript-eslint/no-unnecessary-boolean-literal-compare": "error",
+      "@typescript-eslint/no-this-alias": "error",
+      "@typescript-eslint/no-redundant-type-constituents": "error",
+      "no-loop-func": "off",
+      "@typescript-eslint/no-loop-func": "error",
+      "@typescript-eslint/no-extra-non-null-assertion": "error",
+      "@typescript-eslint/no-empty-object-type": "error",
+      "@typescript-eslint/no-empty-interface": "error",
+      "@typescript-eslint/no-duplicate-type-constituents": "error",
+      "@typescript-eslint/no-duplicate-enum-values": "error",
+      // "max-params": "off",
+      // "@typescript-eslint/max-params": "error",
+
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "error",
       "no-console": "error",
       "no-debugger": "error",
       "no-implicit-coercion": "error",
@@ -29,12 +58,14 @@ export default [
       "no-magic-numbers": [
         "warn",
         {
-          ignore: [0, 1, -1],
+          ignore: [
+            0, 1, -1, 2, 0xff, 0xffff, 0xffffff, 360, 270, 180, 90, 100, 1000,
+          ],
+          ignoreEnums: true,
           ignoreArrayIndexes: true,
           enforceConst: true,
-          detectObjects: true,
-          ignoreDefaultValues: false,
-          ignoreClassFieldInitialValues: false,
+          ignoreDefaultValues: true,
+          ignoreClassFieldInitialValues: true,
         },
       ],
       eqeqeq: ["error", "always"],
@@ -45,6 +76,7 @@ export default [
         { allowExpressions: false },
       ],
       "@typescript-eslint/explicit-module-boundary-types": "error",
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-inferrable-types": "warn",
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
@@ -59,6 +91,14 @@ export default [
       "@typescript-eslint/prefer-optional-chain": "error",
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+      "@typescript-eslint/prefer-nullish-coalescing": "error",
+      "@typescript-eslint/prefer-string-starts-ends-with": "error",
+      "@typescript-eslint/prefer-includes": "error",
+      "@typescript-eslint/no-unnecessary-boolean-literal-compare": "error",
+      "@typescript-eslint/prefer-reduce-type-parameter": "error",
+      "@typescript-eslint/prefer-function-type": "error",
+      "@typescript-eslint/array-type": ["error", { default: "array" }],
+      "@typescript-eslint/prefer-for-of": "error",
 
       "@typescript-eslint/member-ordering": "warn",
       "@typescript-eslint/naming-convention": [
@@ -69,7 +109,7 @@ export default [
         { selector: "enumMember", format: ["UPPER_CASE"] },
         {
           selector: "property",
-          format: ["camelCase", "snake_case"],
+          format: ["camelCase"],
           leadingUnderscore: "allow",
         },
         {
