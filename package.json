@@ -1,6 +1,6 @@
 {
   "name": "laymur-animations",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Standard animations for Laymur UI library",
   "scripts": {
     "clean": "rm -rf dist",

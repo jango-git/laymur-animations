@@ -73,5 +73,5 @@ export default {
       ],
     }),
   ],
-  external: ["gsap"],
+  external: ["laymur", "gsap"],
 };

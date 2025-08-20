@@ -5,19 +5,38 @@ const DEFAULT_DELAY = 0;
 const DEFAULT_DURATION = 0.25;
 const DEFAULT_EASE = "back.out(1.7)";
 
+/**
+ * Configuration options for disappearance animations.
+ */
 export interface UIDisappearAnimatorOptions {
+  /** Target X position */
   xTo: number;
+  /** Target Y position */
   yTo: number;
 
+  /** Target scale value */
   scaleTo: number;
+  /** Target opacity value */
   opacityTo: number;
 
+  /** Animation delay in seconds */
   delay: number;
+  /** Animation duration in seconds */
   duration: number;
+  /** GSAP easing function */
   ease: gsap.EaseString;
 }
 
+/**
+ * Animator for element disappearance effects.
+ */
 export class UIDisappearAnimator {
+  /**
+   * Animates elements disappearing with position, scale, and opacity transitions.
+   * @param target - Single element or array of elements to animate
+   * @param options - Animation configuration options
+   * @returns Promise that resolves when animation completes
+   */
   public static disappear(
     target: UIAnimatedElement | UIAnimatedElement[],
     options: Partial<UIDisappearAnimatorOptions> = {},

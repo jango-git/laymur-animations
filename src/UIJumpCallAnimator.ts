@@ -1,81 +1,161 @@
 import gsap from "gsap";
 import type { UIAnimatedElement } from "./UIAnimatedElement";
 
-const DEFAULT_JUMP_HEIGHT = 25;
-const DEFAULT_ITERATIONS = Infinity;
-const DEFAULT_COOLDOWN = 4;
-const DEFAULT_START_WITH_COOLDOWN = false;
-const DEFAULT_DURATION = 0.5;
-const DEFAULT_EASE_UP = "power2.out";
-const DEFAULT_EASE_DOWN = "bounce.out";
+const DEFAULT_JUMP_HEIGHT = 35;
+const DEFAULT_SCALE_IN = 1.15;
+const DEFAULT_SCALE_OUT = 1.15;
+const DEFAULT_ITERATIONS = -1;
+const DEFAULT_COOLDOWN = 3;
+const DEFAULT_START_WITH_COOLDOWN = true;
+const DEFAULT_DURATION_IN = 0.5;
+const DEFAULT_DURATION_OUT = 0.5;
+const DEFAULT_EASE_IN = "power1.out";
+const DEFAULT_EASE_OUT = "power1.in";
 
 const DEFAULT_STOP_DURATION = 0.25;
 const DEFAULT_STOP_EASE = "power1.inOut";
 
+/**
+ * Configuration options for jump call animations.
+ */
 export interface UIJumpCallAnimatorCallOptions {
+  /** Height of the jump in pixels */
   jumpHeight: number;
+  /** Scale factor during jump start */
+  scaleIn: number;
+  /** Scale factor during jump end */
+  scaleOut: number;
+  /** Number of animation iterations (-1 for infinite) */
   iterations: number;
+  /** Cooldown time between iterations in seconds */
   cooldown: number;
+  /** Whether to start with cooldown delay */
   startWithCooldown: boolean;
-  duration: number;
-  easeUp: gsap.EaseString;
-  easeDown: gsap.EaseString;
+  /** Duration of jump in phase in seconds */
+  durationIn: number;
+  /** Duration of jump out phase in seconds */
+  durationOut: number;
+  /** GSAP easing function for jump in */
+  easeIn: gsap.EaseString;
+  /** GSAP easing function for jump out */
+  easeOut: gsap.EaseString;
 }
 
+/**
+ * Configuration options for stopping jump animations.
+ */
 export interface UIJumpCallAnimatorStopOptions {
+  /** Duration to return to rest position in seconds */
   duration: number;
+  /** GSAP easing function for stop transition */
   ease: gsap.EaseString;
 }
 
+/**
+ * Animator for jump call attention effects.
+ */
 export class UIJumpCallAnimator {
-  public static call(
+  /**
+   * Starts a jumping animation with scale and position effects.
+   * @param target - Single element or array of elements to animate
+   * @param options - Animation configuration options
+   */
+  public static jump(
     target: UIAnimatedElement | UIAnimatedElement[],
     options: Partial<UIJumpCallAnimatorCallOptions> = {},
   ): void {
     const {
       jumpHeight = DEFAULT_JUMP_HEIGHT,
+      scaleIn = DEFAULT_SCALE_IN,
+      scaleOut = DEFAULT_SCALE_OUT,
       iterations = DEFAULT_ITERATIONS,
       cooldown = DEFAULT_COOLDOWN,
       startWithCooldown = DEFAULT_START_WITH_COOLDOWN,
-      duration = DEFAULT_DURATION,
-      easeUp = DEFAULT_EASE_UP,
-      easeDown = DEFAULT_EASE_DOWN,
+      durationIn = DEFAULT_DURATION_IN,
+      durationOut = DEFAULT_DURATION_OUT,
+      easeIn = DEFAULT_EASE_IN,
+      easeOut = DEFAULT_EASE_OUT,
     } = options;
 
     const elements = Array.isArray(target) ? target : [target];
 
     for (const element of elements) {
       const timeline = gsap.timeline({
-        repeat: iterations,
+        repeat: Number.isNaN(iterations) ? -1 : iterations,
         onComplete: () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Removing tween reference from element
           delete (element as any).__laymurCallTween;
         },
       });
 
+      if (startWithCooldown && cooldown > 0) {
+        timeline.to({}, { duration: cooldown });
+      }
+
+      element.micro.anchorY = 0;
+
       timeline
         .to(element.micro, {
-          y: jumpHeight,
-          delay: startWithCooldown ? cooldown : 0,
-          duration,
-          ease: easeUp,
+          scaleX: scaleIn,
+          scaleY: 1 / scaleIn,
+          duration: durationIn * 0.5,
+          ease: "power1.inOut",
         })
         .to(element.micro, {
+          scaleX: 1 / scaleIn,
+          scaleY: scaleIn,
+          duration: durationIn * 0.25,
+          ease: "power1.inOut",
+        })
+        .to(element.micro, {
+          scaleX: 1,
+          scaleY: 1,
+          duration: durationIn * 0.25,
+          ease: "power1.inOut",
+        })
+        .to(
+          element.micro,
+          {
+            y: jumpHeight,
+            duration: durationIn * 0.375,
+            ease: easeIn,
+          },
+          durationIn * 0.625 +
+            (startWithCooldown && cooldown > 0 ? cooldown : 0),
+        )
+        .to(element.micro, {
           y: 0,
-          duration,
-          ease: easeDown,
+          duration: durationOut * 0.375,
+          ease: easeOut,
+        })
+        .to(element.micro, {
+          scaleX: scaleOut,
+          scaleY: 1 / scaleOut,
+          duration: durationOut * 0.225,
+          ease: "power1.out",
+        })
+        .to(element.micro, {
+          scaleX: 1,
+          scaleY: 1,
+          duration: durationOut * 0.4,
+          ease: "power1.inOut",
         });
+
+      if (!startWithCooldown && cooldown > 0) {
+        timeline.to({}, { duration: cooldown });
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Adding tween reference to element for cleanup
       (element as any).__laymurCallTween = timeline;
-
-      if (cooldown > 0 && !startWithCooldown) {
-        timeline.repeatDelay(cooldown);
-      }
     }
   }
 
-  public static stopCall(
+  /**
+   * Stops the jumping animation and returns elements to rest position.
+   * @param target - Single element or array of elements to stop animating
+   * @param options - Stop animation configuration options
+   */
+  public static stopJump(
     target: UIAnimatedElement | UIAnimatedElement[],
     options: Partial<UIJumpCallAnimatorStopOptions> = {},
   ): void {

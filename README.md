@@ -12,6 +12,8 @@ npm install laymur-animations gsap
 
 ## Documentation
 
+See [Usage Example](https://jango-git.github.io/laymur/07_animations.html) for a concrete implementation demonstration.
+
 See [Laymur Documentation](https://jango-git.github.io/laymur/) for complete usage examples and API reference.
 
 ## License

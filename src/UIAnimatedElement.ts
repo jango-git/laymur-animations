@@ -1,12 +1,11 @@
+import type { UIMicro } from "laymur";
+
+/**
+ * Interface for UI elements that can be animated.
+ */
 export interface UIAnimatedElement {
+  /** Element opacity value */
   opacity: number;
-  micro: {
-    x: number;
-    y: number;
-    scaleX: number;
-    scaleY: number;
-    anchorX: number;
-    anchorY: number;
-    rotation: number;
-  };
+  /** Micro transformation object */
+  micro: UIMicro;
 }

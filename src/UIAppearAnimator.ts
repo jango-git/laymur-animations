@@ -9,28 +9,50 @@ const DEFAULT_SCALE_FROM = 0.5;
 const DEFAULT_SCALE_TO = 1;
 const DEFAULT_OPACITY_FROM = 0;
 const DEFAULT_OPACITY_TO = 1;
-
 const DEFAULT_DELAY = 0;
 const DEFAULT_DURATION = 0.25;
 const DEFAULT_EASE = "back.out(1.7)";
 
+/**
+ * Configuration options for appearance animations.
+ */
 export interface UIAppearAnimatorOptions {
+  /** Starting X position */
   xFrom: number;
+  /** Target X position */
   xTo: number;
+  /** Starting Y position */
   yFrom: number;
+  /** Target Y position */
   yTo: number;
 
+  /** Starting scale value */
   scaleFrom: number;
+  /** Target scale value */
   scaleTo: number;
+  /** Starting opacity value */
   opacityFrom: number;
+  /** Target opacity value */
   opacityTo: number;
 
+  /** Animation delay in seconds */
   delay: number;
+  /** Animation duration in seconds */
   duration: number;
+  /** GSAP easing function */
   ease: gsap.EaseString;
 }
 
+/**
+ * Animator for element appearance effects.
+ */
 export class UIAppearAnimator {
+  /**
+   * Animates elements appearing with position, scale, and opacity transitions.
+   * @param target - Single element or array of elements to animate
+   * @param options - Animation configuration options
+   * @returns Promise that resolves when animation completes
+   */
   public static appear(
     target: UIAnimatedElement | UIAnimatedElement[],
     options: Partial<UIAppearAnimatorOptions> = {},
