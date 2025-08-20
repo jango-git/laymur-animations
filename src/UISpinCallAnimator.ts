@@ -1,6 +1,8 @@
 import gsap from "gsap";
 import type { UIAnimatedElement } from "./UIAnimatedElement";
 
+const spinCallTweens = new WeakMap<UIAnimatedElement, gsap.core.Timeline>();
+
 const DEFAULT_ROTATION = 0.0435;
 const DEFAULT_ANCHOR_X = 0.5;
 const DEFAULT_ANCHOR_Y = 0.5;
@@ -82,13 +84,12 @@ export class UISpinCallAnimator {
       const timeline = gsap.timeline({
         repeat: Number.isNaN(iterations) ? -1 : iterations,
         onComplete: () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Removing tween reference from element
-          delete (element as any).__laymurSpinTween;
+          spinCallTweens.delete(element);
         },
       });
 
       if (startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
+        timeline.to({}, { delay: cooldown });
       }
 
       const spinDuration = duration / (spinCount + 2);
@@ -115,11 +116,10 @@ export class UISpinCallAnimator {
       });
 
       if (!startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
+        timeline.to({}, { delay: cooldown });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Adding tween reference to element for cleanup
-      (element as any).__laymurSpinTween = timeline;
+      spinCallTweens.set(element, timeline);
     }
   }
 
@@ -137,12 +137,10 @@ export class UISpinCallAnimator {
     const elements = Array.isArray(target) ? target : [target];
 
     for (const element of elements) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing tween reference from element
-      const tween = (element as any).__laymurSpinTween;
+      const tween = spinCallTweens.get(element);
       if (tween instanceof gsap.core.Timeline) {
         tween.kill();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Removing tween reference from element
-        delete (element as any).__laymurSpinTween;
+        spinCallTweens.delete(element);
 
         gsap.to(element.micro, {
           rotation: 0,

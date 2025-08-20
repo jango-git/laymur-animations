@@ -1,6 +1,8 @@
 import gsap from "gsap";
 import type { UIAnimatedElement } from "./UIAnimatedElement";
 
+const jumpCallTweens = new WeakMap<UIAnimatedElement, gsap.core.Timeline>();
+
 const DEFAULT_JUMP_HEIGHT = 35;
 const DEFAULT_SCALE_IN = 1.15;
 const DEFAULT_SCALE_OUT = 1.15;
@@ -83,13 +85,12 @@ export class UIJumpCallAnimator {
       const timeline = gsap.timeline({
         repeat: Number.isNaN(iterations) ? -1 : iterations,
         onComplete: () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Removing tween reference from element
-          delete (element as any).__laymurCallTween;
+          jumpCallTweens.delete(element);
         },
       });
 
       if (startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
+        timeline.to({}, { delay: cooldown });
       }
 
       element.micro.anchorY = 0;
@@ -142,11 +143,10 @@ export class UIJumpCallAnimator {
         });
 
       if (!startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
+        timeline.to({}, { delay: cooldown });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Adding tween reference to element for cleanup
-      (element as any).__laymurCallTween = timeline;
+      jumpCallTweens.set(element, timeline);
     }
   }
 
@@ -164,13 +164,11 @@ export class UIJumpCallAnimator {
     const elements = Array.isArray(target) ? target : [target];
 
     for (const element of elements) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing tween reference from element
-      const tween = (element as any).__laymurCallTween;
+      const tween = jumpCallTweens.get(element);
 
       if (tween instanceof gsap.core.Timeline) {
         tween.kill();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Removing tween reference from element
-        delete (element as any).__laymurCallTween;
+        jumpCallTweens.delete(element);
 
         gsap.to(element.micro, {
           y: 0,

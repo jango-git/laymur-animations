@@ -1,6 +1,8 @@
 import gsap from "gsap";
 import type { UIAnimatedElement } from "./UIAnimatedElement";
 
+const pulseCallTweens = new WeakMap<UIAnimatedElement, gsap.core.Timeline>();
+
 const DEFAULT_SCALE = 1.1;
 const DEFAULT_ITERATIONS = -1;
 const DEFAULT_COOLDOWN = 3;
@@ -17,7 +19,7 @@ const DEFAULT_STOP_EASE = "power1.inOut";
 /**
  * Configuration options for pulse call animations.
  */
-export interface UIPulseAnimatorCallOptions {
+export interface UIPulseCallAnimatorOptions {
   /** Scale factor for pulse effect */
   scale: number;
   /** Number of animation iterations (-1 for infinite) */
@@ -39,7 +41,7 @@ export interface UIPulseAnimatorCallOptions {
 /**
  * Configuration options for stopping pulse animations.
  */
-export interface UIPulseAnimatorStopOptions {
+export interface UIPulseCallAnimatorStopOptions {
   /** Target scale value when stopping */
   scale: number;
   /** Duration to return to rest scale in seconds */
@@ -51,7 +53,7 @@ export interface UIPulseAnimatorStopOptions {
 /**
  * Animator for pulse attention effects.
  */
-export class UIPulseAnimator {
+export class UIPulseCallAnimator {
   /**
    * Starts a pulsing animation with scale effects.
    * @param target - Single element or array of elements to animate
@@ -59,7 +61,7 @@ export class UIPulseAnimator {
    */
   public static pulse(
     target: UIAnimatedElement | UIAnimatedElement[],
-    options: Partial<UIPulseAnimatorCallOptions> = {},
+    options: Partial<UIPulseCallAnimatorOptions> = {},
   ): void {
     const {
       scale = DEFAULT_SCALE,
@@ -78,13 +80,12 @@ export class UIPulseAnimator {
       const timeline = gsap.timeline({
         repeat: Number.isNaN(iterations) ? -1 : iterations,
         onComplete: () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Removing tween reference from element
-          delete (element as any).__laymurPulseTween;
+          pulseCallTweens.delete(element);
         },
       });
 
       if (startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
+        timeline.to({}, { delay: cooldown });
       }
 
       timeline
@@ -102,11 +103,10 @@ export class UIPulseAnimator {
         });
 
       if (!startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
+        timeline.to({}, { delay: cooldown });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Adding tween reference to element for cleanup
-      (element as any).__laymurPulseTween = timeline;
+      pulseCallTweens.set(element, timeline);
     }
   }
 
@@ -117,7 +117,7 @@ export class UIPulseAnimator {
    */
   public static stopPulse(
     target: UIAnimatedElement | UIAnimatedElement[],
-    options: Partial<UIPulseAnimatorStopOptions> = {},
+    options: Partial<UIPulseCallAnimatorStopOptions> = {},
   ): void {
     const {
       scale = DEFAULT_STOP_SCALE,
@@ -127,12 +127,10 @@ export class UIPulseAnimator {
     const elements = Array.isArray(target) ? target : [target];
 
     for (const element of elements) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing tween reference from element
-      const tween = (element as any).__laymurPulseTween;
+      const tween = pulseCallTweens.get(element);
       if (tween instanceof gsap.core.Timeline) {
         tween.kill();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Removing tween reference from element
-        delete (element as any).__laymurPulseTween;
+        pulseCallTweens.delete(element);
 
         gsap.to(element.micro, {
           scaleX: scale,
