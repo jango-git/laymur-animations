@@ -89,7 +89,7 @@ export class UISpinCallAnimator {
       });
 
       if (startWithCooldown && cooldown > 0) {
-        timeline.to({}, { delay: cooldown });
+        timeline.to({}, { duration: cooldown });
       }
 
       const spinDuration = duration / (spinCount + 2);
@@ -116,7 +116,7 @@ export class UISpinCallAnimator {
       });
 
       if (!startWithCooldown && cooldown > 0) {
-        timeline.to({}, { delay: cooldown });
+        timeline.to({}, { duration: cooldown });
       }
 
       spinCallTweens.set(element, timeline);

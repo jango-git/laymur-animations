@@ -85,7 +85,7 @@ export class UIPulseCallAnimator {
       });
 
       if (startWithCooldown && cooldown > 0) {
-        timeline.to({}, { delay: cooldown });
+        timeline.to({}, { duration: cooldown });
       }
 
       timeline
@@ -103,7 +103,7 @@ export class UIPulseCallAnimator {
         });
 
       if (!startWithCooldown && cooldown > 0) {
-        timeline.to({}, { delay: cooldown });
+        timeline.to({}, { duration: cooldown });
       }
 
       pulseCallTweens.set(element, timeline);

@@ -90,7 +90,7 @@ export class UIJumpCallAnimator {
       });
 
       if (startWithCooldown && cooldown > 0) {
-        timeline.to({}, { delay: cooldown });
+        timeline.to({}, { duration: cooldown });
       }
 
       element.micro.anchorY = 0;
@@ -143,7 +143,7 @@ export class UIJumpCallAnimator {
         });
 
       if (!startWithCooldown && cooldown > 0) {
-        timeline.to({}, { delay: cooldown });
+        timeline.to({}, { duration: cooldown });
       }
 
       jumpCallTweens.set(element, timeline);
