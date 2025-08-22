@@ -7,8 +7,8 @@ const DEFAULT_Y_FROM = 0;
 const DEFAULT_Y_TO = 0;
 const DEFAULT_SCALE_FROM = 0.5;
 const DEFAULT_SCALE_TO = 1;
-const DEFAULT_OPACITY_FROM = 0;
-const DEFAULT_OPACITY_TO = 1;
+const DEFAULT_ALPHA_FROM = 0;
+const DEFAULT_ALPHA_TO = 1;
 const DEFAULT_DELAY = 0;
 const DEFAULT_DURATION = 0.25;
 const DEFAULT_EASE = "back.out(1.7)";
@@ -30,10 +30,10 @@ export interface UIAppearAnimatorOptions {
   scaleFrom: number;
   /** Target scale value */
   scaleTo: number;
-  /** Starting opacity value */
-  opacityFrom: number;
-  /** Target opacity value */
-  opacityTo: number;
+  /** Starting alpha value */
+  alphaFrom: number;
+  /** Target alpha value */
+  alphaTo: number;
 
   /** Animation delay in seconds */
   delay: number;
@@ -48,7 +48,7 @@ export interface UIAppearAnimatorOptions {
  */
 export class UIAppearAnimator {
   /**
-   * Animates elements appearing with position, scale, and opacity transitions.
+   * Animates elements appearing with position, scale, and alpha transitions.
    * @param target - Single element or array of elements to animate
    * @param options - Animation configuration options
    * @returns Promise that resolves when animation completes
@@ -64,8 +64,8 @@ export class UIAppearAnimator {
       yTo = DEFAULT_Y_TO,
       scaleFrom = DEFAULT_SCALE_FROM,
       scaleTo = DEFAULT_SCALE_TO,
-      opacityFrom = DEFAULT_OPACITY_FROM,
-      opacityTo = DEFAULT_OPACITY_TO,
+      alphaFrom = DEFAULT_ALPHA_FROM,
+      alphaTo = DEFAULT_ALPHA_TO,
       delay = DEFAULT_DELAY,
       duration = DEFAULT_DURATION,
       ease = DEFAULT_EASE,
@@ -73,6 +73,10 @@ export class UIAppearAnimator {
 
     const elements = Array.isArray(target) ? target : [target];
     const elementTarget: Record<string, unknown> = {
+      duration,
+      ease: "power1.inOut",
+    };
+    const colorTarget: Record<string, unknown> = {
       duration,
       ease: "power1.inOut",
     };
@@ -98,10 +102,10 @@ export class UIAppearAnimator {
         element.micro.scaleY = scaleFrom;
       }
     }
-    if (opacityFrom !== opacityTo) {
-      elementTarget.opacity = opacityTo;
+    if (alphaFrom !== alphaTo) {
+      colorTarget.a = alphaTo;
       for (const element of elements) {
-        element.opacity = opacityFrom;
+        element.color.a = alphaFrom;
       }
     }
 
@@ -111,7 +115,8 @@ export class UIAppearAnimator {
       for (const element of elements) {
         timeline
           .to(element, elementTarget, 0)
-          .to(element.micro, microTarget, 0);
+          .to(element.micro, microTarget, 0)
+          .to(element.color, colorTarget, 0);
       }
     });
   }

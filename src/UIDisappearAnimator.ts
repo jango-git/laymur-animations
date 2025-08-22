@@ -16,8 +16,8 @@ export interface UIDisappearAnimatorOptions {
 
   /** Target scale value */
   scaleTo: number;
-  /** Target opacity value */
-  opacityTo: number;
+  /** Target alpha value */
+  alphaTo: number;
 
   /** Animation delay in seconds */
   delay: number;
@@ -32,7 +32,7 @@ export interface UIDisappearAnimatorOptions {
  */
 export class UIDisappearAnimator {
   /**
-   * Animates elements disappearing with position, scale, and opacity transitions.
+   * Animates elements disappearing with position, scale, and alpha transitions.
    * @param target - Single element or array of elements to animate
    * @param options - Animation configuration options
    * @returns Promise that resolves when animation completes
@@ -53,6 +53,10 @@ export class UIDisappearAnimator {
       ease: "power1.inOut",
     };
     const microTarget: Record<string, unknown> = { duration, ease };
+    const colorTarget: Record<string, unknown> = {
+      duration,
+      ease: "power1.inOut",
+    };
 
     if (options.xTo !== undefined) {
       microTarget.x = options.xTo;
@@ -64,8 +68,8 @@ export class UIDisappearAnimator {
       microTarget.scaleX = options.scaleTo;
       microTarget.scaleY = options.scaleTo;
     }
-    if (options.opacityTo !== undefined) {
-      elementTarget.opacity = options.opacityTo;
+    if (options.alphaTo !== undefined) {
+      elementTarget.a = options.alphaTo;
     }
 
     return new Promise((onComplete) => {
@@ -74,7 +78,8 @@ export class UIDisappearAnimator {
       for (const element of elements) {
         timeline
           .to(element, elementTarget, 0)
-          .to(element.micro, microTarget, 0);
+          .to(element.micro, microTarget, 0)
+          .to(element.color, colorTarget, 0);
       }
     });
   }
