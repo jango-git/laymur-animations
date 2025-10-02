@@ -54,6 +54,7 @@ export class UIDisappearAnimator {
     const colorTarget: Record<string, unknown> = {
       duration,
       ease: "power1.inOut",
+      alpha: alphaTo,
     };
 
     if (options.xTo !== undefined) {
@@ -65,9 +66,6 @@ export class UIDisappearAnimator {
     if (options.scaleTo !== undefined) {
       microTarget.scaleX = options.scaleTo;
       microTarget.scaleY = options.scaleTo;
-    }
-    if (options.alphaTo !== undefined) {
-      colorTarget.a = alphaTo;
     }
 
     return new Promise((onComplete) => {
