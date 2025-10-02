@@ -72,10 +72,6 @@ export class UIAppearAnimator {
     } = options;
 
     const elements = Array.isArray(target) ? target : [target];
-    const elementTarget: Record<string, unknown> = {
-      duration,
-      ease: "power1.inOut",
-    };
     const colorTarget: Record<string, unknown> = {
       duration,
       ease: "power1.inOut",
@@ -114,7 +110,6 @@ export class UIAppearAnimator {
 
       for (const element of elements) {
         timeline
-          .to(element, elementTarget, 0)
           .to(element.micro, microTarget, 0)
           .to(element.color, colorTarget, 0);
       }

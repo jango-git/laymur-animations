@@ -3,7 +3,8 @@ import type { UIAnimatedElement } from "./UIAnimatedElement";
 
 const DEFAULT_DELAY = 0;
 const DEFAULT_DURATION = 0.25;
-const DEFAULT_EASE = "back.out(1.7)";
+const DEFAULT_EASE = "back.in(1.7)";
+const DEFAULT_ALPHA_TO = 0;
 
 /**
  * Configuration options for disappearance animations.
@@ -45,6 +46,7 @@ export class UIDisappearAnimator {
       delay = DEFAULT_DELAY,
       duration = DEFAULT_DURATION,
       ease = DEFAULT_EASE,
+      alphaTo = DEFAULT_ALPHA_TO,
     } = options;
 
     const elements = Array.isArray(target) ? target : [target];
@@ -65,7 +67,7 @@ export class UIDisappearAnimator {
       microTarget.scaleY = options.scaleTo;
     }
     if (options.alphaTo !== undefined) {
-      colorTarget.a = options.alphaTo;
+      colorTarget.a = alphaTo;
     }
 
     return new Promise((onComplete) => {
