@@ -54,7 +54,7 @@ export class UIDisappearAnimator {
     const colorTarget: Record<string, unknown> = {
       duration,
       ease: "power1.inOut",
-      alpha: alphaTo,
+      a: alphaTo,
     };
 
     if (options.xTo !== undefined) {
