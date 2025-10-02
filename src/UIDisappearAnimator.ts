@@ -48,10 +48,6 @@ export class UIDisappearAnimator {
     } = options;
 
     const elements = Array.isArray(target) ? target : [target];
-    const elementTarget: Record<string, unknown> = {
-      duration,
-      ease: "power1.inOut",
-    };
     const microTarget: Record<string, unknown> = { duration, ease };
     const colorTarget: Record<string, unknown> = {
       duration,
@@ -69,7 +65,7 @@ export class UIDisappearAnimator {
       microTarget.scaleY = options.scaleTo;
     }
     if (options.alphaTo !== undefined) {
-      elementTarget.a = options.alphaTo;
+      colorTarget.a = options.alphaTo;
     }
 
     return new Promise((onComplete) => {
@@ -77,7 +73,6 @@ export class UIDisappearAnimator {
 
       for (const element of elements) {
         timeline
-          .to(element, elementTarget, 0)
           .to(element.micro, microTarget, 0)
           .to(element.color, colorTarget, 0);
       }
