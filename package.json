@@ -1,6 +1,6 @@
 {
   "name": "laymur-animations",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Standard animations for Laymur UI library",
   "scripts": {
     "clean": "rm -rf dist",
@@ -23,17 +23,9 @@
     },
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "sideEffects": false,
-  "keywords": [
-    "laymur",
-    "ui",
-    "animations",
-    "three.js",
-    "gsap"
-  ],
+  "keywords": ["laymur", "ui", "animations", "three.js", "gsap"],
   "author": "jango",
   "license": "MIT",
   "repository": {
@@ -42,7 +34,7 @@
   },
   "type": "module",
   "peerDependencies": {
-    "laymur": ">=0.10.0 <0.11.0",
+    "laymur": ">=0.11.0 <0.12.0",
     "gsap": ">=3.13.0 <4.0.0"
   },
   "devDependencies": {
