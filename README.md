@@ -1,8 +1,8 @@
 # Laymur Animations
 
-A collection of standard UI animations for [Laymur UI library](https://github.com/jango-git/laymur) - a Three.js-based UI framework. Includes common animations like appear/disappear effects, pulsing, jumping, and spinning.
+A collection of common UI animations for Laymur UI library. Includes popular animations like appear/disappear effects, pulsing, jumping, and spinning.
 
-All animations are built on top of GSAP for smooth, performant motion. GSAP is a peer dependency with its own licensing terms - see [GSAP License](https://gsap.com/licensing/) for details.
+**Important:** This package does not include GSAP. GSAP is a peer dependency with its own commercial licensing terms - see [GSAP License](https://gsap.com/licensing/) for details. You must install GSAP separately.
 
 ## Installation
 

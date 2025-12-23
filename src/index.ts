@@ -1,7 +1,6 @@
-export * from "./UIAnimatedElement";
-export * from "./UIAppearAnimator";
-export * from "./UIClickAnimator";
-export * from "./UIDisappearAnimator";
-export * from "./UIJumpCallAnimator";
-export * from "./UIPulseCallAnimator";
-export * from "./UISpinCallAnimator";
+export { UIAppearAnimator } from "./UIAppearAnimator";
+export { UIClickAnimator } from "./UIClickAnimator";
+export { UIDisappearAnimator } from "./UIDisappearAnimator";
+export { UIJumpCallAnimator } from "./UIJumpCallAnimator";
+export { UIPulseCallAnimator } from "./UIPulseCallAnimator";
+export { UISpinCallAnimator } from "./UISpinCallAnimator";

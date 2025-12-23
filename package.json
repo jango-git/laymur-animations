@@ -1,7 +1,7 @@
 {
   "name": "laymur-animations",
-  "version": "0.11.0",
-  "description": "Standard animations for Laymur UI library",
+  "version": "0.12.0",
+  "description": "Common animations for the Laymur UI library",
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && rollup -c",
@@ -13,19 +13,30 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": {
+        "types": "./dist/index.d.ts",
         "development": "./dist/index.js",
         "production": "./dist/index.min.js",
         "default": "./dist/index.min.js"
       },
-      "require": "./dist/index.min.js"
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.min.js"
+      }
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
-  "keywords": ["laymur", "ui", "animations", "three.js", "gsap"],
+  "keywords": [
+    "laymur",
+    "ui",
+    "animations",
+    "three.js",
+    "gsap"
+  ],
   "author": "jango",
   "license": "MIT",
   "repository": {
@@ -34,7 +45,7 @@
   },
   "type": "module",
   "peerDependencies": {
-    "laymur": ">=0.11.0 <0.12.0",
+    "laymur": ">=0.12.0 <0.13.0",
     "gsap": ">=3.13.0 <4.0.0"
   },
   "devDependencies": {
