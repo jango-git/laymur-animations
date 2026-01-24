@@ -72,9 +72,7 @@ export class UIDisappearAnimator {
       const timeline = gsap.timeline({ delay, onComplete });
 
       for (const element of elements) {
-        timeline
-          .to(element.micro, microTarget, 0)
-          .to(element.color, colorTarget, 0);
+        timeline.to(element.micro, microTarget, 0).to(element.color, colorTarget, 0);
       }
     });
   }

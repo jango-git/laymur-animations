@@ -121,8 +121,7 @@ export class UIJumpCallAnimator {
             duration: durationIn * 0.375,
             ease: easeIn,
           },
-          durationIn * 0.625 +
-            (startWithCooldown && cooldown > 0 ? cooldown : 0),
+          durationIn * 0.625 + (startWithCooldown && cooldown > 0 ? cooldown : 0),
         )
         .to(element.micro, {
           y: 0,
@@ -159,8 +158,7 @@ export class UIJumpCallAnimator {
     target: UIAnimatedElement | UIAnimatedElement[],
     options: Partial<UIJumpCallAnimatorStopOptions> = {},
   ): void {
-    const { duration = DEFAULT_STOP_DURATION, ease = DEFAULT_STOP_EASE } =
-      options;
+    const { duration = DEFAULT_STOP_DURATION, ease = DEFAULT_STOP_EASE } = options;
     const elements = Array.isArray(target) ? target : [target];
 
     for (const element of elements) {

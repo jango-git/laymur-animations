@@ -98,9 +98,7 @@ export class UIClickAnimator {
       }
 
       for (const element of elements) {
-        timeline
-          .to(element.micro, inMicroTarget, 0)
-          .to(element.micro, outMicroTarget);
+        timeline.to(element.micro, inMicroTarget, 0).to(element.micro, outMicroTarget);
       }
     });
   }

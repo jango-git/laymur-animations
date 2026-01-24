@@ -132,8 +132,7 @@ export class UISpinCallAnimator {
     target: UIAnimatedElement | UIAnimatedElement[],
     options: Partial<UISpinCallAnimatorStopOptions> = {},
   ): void {
-    const { duration = DEFAULT_STOP_DURATION, ease = DEFAULT_STOP_EASE } =
-      options;
+    const { duration = DEFAULT_STOP_DURATION, ease = DEFAULT_STOP_EASE } = options;
     const elements = Array.isArray(target) ? target : [target];
 
     for (const element of elements) {
