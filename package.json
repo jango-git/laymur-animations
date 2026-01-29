@@ -1,6 +1,6 @@
 {
   "name": "laymur-animations",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Common animations for the Laymur UI library",
   "scripts": {
     "clean": "rm -rf dist",
@@ -8,9 +8,13 @@
     "build:prod": "npm run clean && NODE_ENV=production rollup -c",
     "prepublishOnly": "npm run build:prod"
   },
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "import": {
@@ -26,9 +30,6 @@
     },
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist"
-  ],
   "sideEffects": false,
   "keywords": [
     "laymur",
@@ -45,7 +46,7 @@
   },
   "type": "module",
   "peerDependencies": {
-    "laymur": ">=0.16.0 <0.17.0",
+    "laymur": ">=0.17.0 <0.18.0",
     "gsap": ">=3.13.0 <4.0.0"
   },
   "devDependencies": {
