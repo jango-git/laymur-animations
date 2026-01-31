@@ -4,3 +4,4 @@ export { UIDisappearAnimator } from "./UIDisappearAnimator";
 export { UIJumpCallAnimator } from "./UIJumpCallAnimator";
 export { UIPulseCallAnimator } from "./UIPulseCallAnimator";
 export { UISpinCallAnimator } from "./UISpinCallAnimator";
+export { UISwipeCallAnimator } from "./UISwipeCallAnimator";
