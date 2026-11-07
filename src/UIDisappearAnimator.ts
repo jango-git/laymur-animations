@@ -1,10 +1,20 @@
 import gsap from "gsap";
-import type { UIAnimatedElement } from "./UIAnimatedElement";
+import type { UIAnimatedElement } from "./UIAnimatedElement.js";
+import {
+  hideElement,
+  isVisibilityTracked,
+  resolveTargets,
+  settle,
+  stopVisibility,
+  trackVisibility,
+} from "./miscellaneous.js";
 
 const DEFAULT_DELAY = 0;
+const DEFAULT_STAGGER = 0;
 const DEFAULT_DURATION = 0.25;
 const DEFAULT_EASE = "back.in(1.7)";
 const DEFAULT_ALPHA_TO = 0;
+const DEFAULT_HIDE = false;
 
 /**
  * Configuration options for disappearance animations.
@@ -22,10 +32,17 @@ export interface UIDisappearAnimatorOptions {
 
   /** Animation delay in seconds */
   delay: number;
+  /** Delay between the starts of consecutive elements in seconds */
+  stagger: number;
   /** Animation duration in seconds */
   duration: number;
   /** GSAP easing function */
   ease: gsap.EaseString;
+  /**
+   * Whether to set the mode of the element to HIDDEN once it has disappeared, so it stops
+   * catching input; the appear animator gives the mode back
+   */
+  hide: boolean;
 }
 
 /**
@@ -33,10 +50,11 @@ export interface UIDisappearAnimatorOptions {
  */
 export class UIDisappearAnimator {
   /**
-   * Animates elements disappearing with position, scale, and alpha transitions.
+   * Animates elements disappearing with position, scale, and alpha transitions. Replaces an
+   * appearance or disappearance running on the same element.
    * @param target - Single element or array of elements to animate
    * @param options - Animation configuration options
-   * @returns Promise that resolves when animation completes
+   * @returns Promise that resolves when animation completes or is interrupted
    */
   public static disappear(
     target: UIAnimatedElement | UIAnimatedElement[],
@@ -44,12 +62,14 @@ export class UIDisappearAnimator {
   ): Promise<void> {
     const {
       delay = DEFAULT_DELAY,
+      stagger = DEFAULT_STAGGER,
       duration = DEFAULT_DURATION,
       ease = DEFAULT_EASE,
       alphaTo = DEFAULT_ALPHA_TO,
+      hide = DEFAULT_HIDE,
     } = options;
 
-    const elements = Array.isArray(target) ? target : [target];
+    const elements = resolveTargets(target);
     const microTarget: Record<string, unknown> = { duration, ease };
     const colorTarget: Record<string, unknown> = {
       duration,
@@ -68,12 +88,20 @@ export class UIDisappearAnimator {
       microTarget.scaleY = options.scaleTo;
     }
 
-    return new Promise((onComplete) => {
-      const timeline = gsap.timeline({ delay, onComplete });
+    const animations = elements.map((element, index) => {
+      stopVisibility(element);
 
-      for (const element of elements) {
-        timeline.to(element.micro, microTarget, 0).to(element.color, colorTarget, 0);
-      }
+      const timeline = gsap.timeline({ delay: delay + index * stagger });
+      timeline.to(element.micro, microTarget, 0).to(element.color, colorTarget, 0);
+      trackVisibility(element, timeline);
+      return settle(timeline).then((completed) => {
+        // An appearance may have started since the disappearance completed
+        if (completed && hide && isVisibilityTracked(element, timeline)) {
+          hideElement(element);
+        }
+      });
     });
+
+    return Promise.all(animations).then(() => undefined);
   }
 }

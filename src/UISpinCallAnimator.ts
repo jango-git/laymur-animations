@@ -1,7 +1,8 @@
 import gsap from "gsap";
-import type { UIAnimatedElement } from "./UIAnimatedElement";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+import { iterationsToRepeat, resolveTargets, UICallTracker } from "./miscellaneous.js";
 
-const spinCallTweens = new WeakMap<UIAnimatedElement, gsap.core.Timeline>();
+const spinCalls = new UICallTracker(["rotation", "anchorX", "anchorY"]);
 
 const DEFAULT_ROTATION = 0.0435;
 const DEFAULT_ANCHOR_X = 0.5;
@@ -20,7 +21,7 @@ const DEFAULT_STOP_EASE = "power1.inOut";
  * Configuration options for spin call animations.
  */
 export interface UISpinCallAnimatorCallOptions {
-  /** Rotation angle in radians */
+  /** Rotation angle in radians, relative to the rest rotation */
   rotation: number;
   /** Anchor point X coordinate (0-1) */
   anchorX: number;
@@ -38,6 +39,8 @@ export interface UISpinCallAnimatorCallOptions {
   duration: number;
   /** GSAP easing function */
   ease: gsap.EaseString;
+  /** Called once the call ends: completed, stopped or replaced by another spin */
+  onComplete: () => void;
 }
 
 /**
@@ -55,12 +58,13 @@ export interface UISpinCallAnimatorStopOptions {
  */
 export class UISpinCallAnimator {
   /**
-   * Starts a spinning animation with rotation oscillations.
+   * Starts a spinning animation with rotation oscillations. Replaces a spin running on the same
+   * element; the anchor is restored once the element is back at rest.
    * @param target - Single element or array of elements to animate
    * @param options - Animation configuration options
    */
   public static spin(
-    target: UIAnimatedElement | UIAnimatedElement[],
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
     options: Partial<UISpinCallAnimatorCallOptions> = {},
   ): void {
     const {
@@ -73,53 +77,56 @@ export class UISpinCallAnimator {
       startWithCooldown = DEFAULT_START_WITH_COOLDOWN,
       duration = DEFAULT_DURATION,
       ease = DEFAULT_EASE,
+      onComplete,
     } = options;
 
-    const elements = Array.isArray(target) ? target : [target];
+    for (const element of resolveTargets(target)) {
+      const micro = element.micro;
 
-    for (const element of elements) {
-      element.micro.anchorX = anchorX;
-      element.micro.anchorY = anchorY;
+      spinCalls.start(
+        micro,
+        (rest) => {
+          micro.anchorX = anchorX;
+          micro.anchorY = anchorY;
 
-      const timeline = gsap.timeline({
-        repeat: Number.isNaN(iterations) ? -1 : iterations,
-        onComplete: () => {
-          spinCallTweens.delete(element);
+          const timeline = gsap.timeline({ repeat: iterationsToRepeat(iterations) });
+
+          if (startWithCooldown && cooldown > 0) {
+            timeline.to({}, { duration: cooldown });
+          }
+
+          const spinDuration = duration / (spinCount + 2);
+
+          timeline.to(micro, {
+            rotation: rest.rotation + rotation,
+            duration: spinDuration,
+            ease,
+          });
+
+          let currentRotation = rotation;
+          for (let i = 0; i < spinCount; i++) {
+            currentRotation *= -1;
+            timeline.to(micro, {
+              rotation: rest.rotation + currentRotation,
+              duration: spinDuration,
+              ease,
+            });
+          }
+
+          timeline.to(micro, {
+            rotation: rest.rotation,
+            duration: spinDuration,
+            ease,
+          });
+
+          if (!startWithCooldown && cooldown > 0) {
+            timeline.to({}, { duration: cooldown });
+          }
+
+          return timeline;
         },
-      });
-
-      if (startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
-      }
-
-      const spinDuration = duration / (spinCount + 2);
-
-      timeline.to(element.micro, {
-        rotation,
-        duration: spinDuration,
-        ease,
-      });
-
-      let currentRotation = rotation;
-      for (let i = 0; i < spinCount; i++) {
-        timeline.to(element.micro, {
-          rotation: (currentRotation *= -1),
-          duration: spinDuration,
-          ease,
-        });
-      }
-
-      timeline.to(element.micro, {
-        rotation: 0,
-        duration: spinDuration,
-        ease,
-      });
-
-      if (!startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
-      }
-
-      spinCallTweens.set(element, timeline);
+        onComplete,
+      );
     }
   }
 
@@ -129,24 +136,13 @@ export class UISpinCallAnimator {
    * @param options - Stop animation configuration options
    */
   public static stopSpin(
-    target: UIAnimatedElement | UIAnimatedElement[],
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
     options: Partial<UISpinCallAnimatorStopOptions> = {},
   ): void {
     const { duration = DEFAULT_STOP_DURATION, ease = DEFAULT_STOP_EASE } = options;
-    const elements = Array.isArray(target) ? target : [target];
 
-    for (const element of elements) {
-      const tween = spinCallTweens.get(element);
-      if (tween instanceof gsap.core.Timeline) {
-        tween.kill();
-        spinCallTweens.delete(element);
-
-        gsap.to(element.micro, {
-          rotation: 0,
-          duration,
-          ease,
-        });
-      }
+    for (const element of resolveTargets(target)) {
+      spinCalls.stop(element.micro, duration, ease);
     }
   }
 }

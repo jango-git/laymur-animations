@@ -1,5 +1,7 @@
 import gsap from "gsap";
-import type { UIAnimatedElement } from "./UIAnimatedElement";
+import type { UIMicro } from "laymur";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+import { resolveTargets, UICallTracker } from "./miscellaneous.js";
 
 const DEFAULT_X_OFFSET = 0;
 const DEFAULT_Y_OFFSET = -25;
@@ -10,6 +12,35 @@ const DEFAULT_DURATION_IN = 0.125;
 const DEFAULT_DURATION_OUT = 0.25;
 const DEFAULT_EASE_IN = "power1.out";
 const DEFAULT_EASE_OUT = "back.out";
+const DEFAULT_KEEP_HIT_AREA = true;
+
+/** A click replaces the one running on the same element, keeping its rest values */
+const clickCalls = new UICallTracker(["x", "y", "scaleX", "scaleY"]);
+
+/** Clicks in progress per micro and its affectsInput from before the first of them */
+const hitAreaLocks = new WeakMap<UIMicro, { count: number; affectsInput: boolean }>();
+
+function lockHitArea(micro: UIMicro): void {
+  const lock = hitAreaLocks.get(micro);
+  if (lock) {
+    lock.count++;
+    return;
+  }
+  hitAreaLocks.set(micro, { count: 1, affectsInput: micro.affectsInput });
+  micro.affectsInput = false;
+}
+
+function unlockHitArea(micro: UIMicro): void {
+  const lock = hitAreaLocks.get(micro);
+  if (!lock) {
+    return;
+  }
+  lock.count--;
+  if (lock.count === 0) {
+    hitAreaLocks.delete(micro);
+    micro.affectsInput = lock.affectsInput;
+  }
+}
 
 /**
  * Configuration options for click animations.
@@ -33,6 +64,11 @@ export interface UIClickAnimatorOptions {
   easeIn: gsap.EaseString;
   /** GSAP easing function for click out */
   easeOut: gsap.EaseString;
+  /**
+   * Whether the hit area stays in place while the element is pressed, instead of following
+   * the shrinking element (see UIMicro.affectsInput); otherwise a release near the edge misses
+   */
+  keepHitArea: boolean;
 }
 
 /**
@@ -40,13 +76,15 @@ export interface UIClickAnimatorOptions {
  */
 export class UIClickAnimator {
   /**
-   * Animates elements with click feedback including position offset and scale effects.
+   * Animates elements with click feedback including position offset and scale effects,
+   * relative to the transform the element rests at. A click replaces the one running on the
+   * same element.
    * @param target - Single element or array of elements to animate
    * @param options - Animation configuration options
-   * @returns Promise that resolves when animation completes
+   * @returns Promise that resolves when animation completes or is interrupted
    */
   public static click(
-    target: UIAnimatedElement | UIAnimatedElement[],
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
     options: Partial<UIClickAnimatorOptions> = {},
   ): Promise<void> {
     const {
@@ -59,47 +97,50 @@ export class UIClickAnimator {
       durationOut = DEFAULT_DURATION_OUT,
       easeIn = DEFAULT_EASE_IN,
       easeOut = DEFAULT_EASE_OUT,
+      keepHitArea = DEFAULT_KEEP_HIT_AREA,
     } = options;
 
-    const elements = Array.isArray(target) ? target : [target];
+    const elements = resolveTargets(target);
 
-    return new Promise((onComplete) => {
-      const timeline = gsap.timeline({ onComplete });
+    const clicks = elements.map(
+      (element) =>
+        new Promise<void>((resolve) => {
+          const micro = element.micro;
+          if (keepHitArea) {
+            lockHitArea(micro);
+          }
 
-      const inMicroTarget: Record<string, unknown> = {
-        delay,
-        duration: durationIn,
-        ease: easeIn,
-      };
+          clickCalls.start(
+            micro,
+            (rest) =>
+              gsap
+                .timeline({ delay })
+                .to(micro, {
+                  x: rest.x + xOffset,
+                  y: rest.y + yOffset,
+                  scaleX: rest.scaleX * xScale,
+                  scaleY: rest.scaleY * yScale,
+                  duration: durationIn,
+                  ease: easeIn,
+                })
+                .to(micro, {
+                  x: rest.x,
+                  y: rest.y,
+                  scaleX: rest.scaleX,
+                  scaleY: rest.scaleY,
+                  duration: durationOut,
+                  ease: easeOut,
+                }),
+            () => {
+              if (keepHitArea) {
+                unlockHitArea(micro);
+              }
+              resolve();
+            },
+          );
+        }),
+    );
 
-      const outMicroTarget: Record<string, unknown> = {
-        duration: durationOut,
-        ease: easeOut,
-      };
-
-      if (xOffset !== 0) {
-        inMicroTarget.x = xOffset;
-        outMicroTarget.x = 0;
-      }
-
-      if (yOffset !== 0) {
-        inMicroTarget.y = yOffset;
-        outMicroTarget.y = 0;
-      }
-
-      if (xScale !== 1) {
-        inMicroTarget.scaleX = xScale;
-        outMicroTarget.scaleX = 1;
-      }
-
-      if (yScale !== 1) {
-        inMicroTarget.scaleY = yScale;
-        outMicroTarget.scaleY = 1;
-      }
-
-      for (const element of elements) {
-        timeline.to(element.micro, inMicroTarget, 0).to(element.micro, outMicroTarget);
-      }
-    });
+    return Promise.all(clicks).then(() => undefined);
   }
 }

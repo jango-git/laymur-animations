@@ -1,7 +1,8 @@
 import gsap from "gsap";
-import type { UIAnimatedElement } from "./UIAnimatedElement";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+import { iterationsToRepeat, resolveTargets, UICallTracker } from "./miscellaneous.js";
 
-const jumpCallTweens = new WeakMap<UIAnimatedElement, gsap.core.Timeline>();
+const jumpCalls = new UICallTracker(["y", "scaleX", "scaleY", "anchorY"]);
 
 const DEFAULT_JUMP_HEIGHT = 35;
 const DEFAULT_SCALE_IN = 1.15;
@@ -21,7 +22,7 @@ const DEFAULT_STOP_EASE = "power1.inOut";
  * Configuration options for jump call animations.
  */
 export interface UIJumpCallAnimatorCallOptions {
-  /** Height of the jump in pixels */
+  /** Height of the jump in world units */
   jumpHeight: number;
   /** Scale factor during jump start */
   scaleIn: number;
@@ -41,6 +42,8 @@ export interface UIJumpCallAnimatorCallOptions {
   easeIn: gsap.EaseString;
   /** GSAP easing function for jump out */
   easeOut: gsap.EaseString;
+  /** Called once the call ends: completed, stopped or replaced by another jump */
+  onComplete: () => void;
 }
 
 /**
@@ -58,12 +61,14 @@ export interface UIJumpCallAnimatorStopOptions {
  */
 export class UIJumpCallAnimator {
   /**
-   * Starts a jumping animation with scale and position effects.
+   * Starts a jumping animation with scale and position effects, squashing around the bottom
+   * edge. Replaces a jump running on the same element; the anchor is restored once the
+   * element is back at rest.
    * @param target - Single element or array of elements to animate
    * @param options - Animation configuration options
    */
   public static jump(
-    target: UIAnimatedElement | UIAnimatedElement[],
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
     options: Partial<UIJumpCallAnimatorCallOptions> = {},
   ): void {
     const {
@@ -77,103 +82,94 @@ export class UIJumpCallAnimator {
       durationOut = DEFAULT_DURATION_OUT,
       easeIn = DEFAULT_EASE_IN,
       easeOut = DEFAULT_EASE_OUT,
+      onComplete,
     } = options;
 
-    const elements = Array.isArray(target) ? target : [target];
+    for (const element of resolveTargets(target)) {
+      const micro = element.micro;
 
-    for (const element of elements) {
-      const timeline = gsap.timeline({
-        repeat: Number.isNaN(iterations) ? -1 : iterations,
-        onComplete: () => {
-          jumpCallTweens.delete(element);
+      jumpCalls.start(
+        micro,
+        (rest) => {
+          micro.anchorY = 0;
+
+          const timeline = gsap.timeline({ repeat: iterationsToRepeat(iterations) });
+          const leadIn = startWithCooldown && cooldown > 0 ? cooldown : 0;
+
+          if (leadIn > 0) {
+            timeline.to({}, { duration: leadIn });
+          }
+
+          timeline
+            .to(micro, {
+              scaleX: rest.scaleX * scaleIn,
+              scaleY: rest.scaleY / scaleIn,
+              duration: durationIn * 0.5,
+              ease: "power1.inOut",
+            })
+            .to(micro, {
+              scaleX: rest.scaleX / scaleIn,
+              scaleY: rest.scaleY * scaleIn,
+              duration: durationIn * 0.25,
+              ease: "power1.inOut",
+            })
+            .to(micro, {
+              scaleX: rest.scaleX,
+              scaleY: rest.scaleY,
+              duration: durationIn * 0.25,
+              ease: "power1.inOut",
+            })
+            .to(
+              micro,
+              {
+                y: rest.y + jumpHeight,
+                duration: durationIn * 0.375,
+                ease: easeIn,
+              },
+              leadIn + durationIn * 0.625,
+            )
+            .to(micro, {
+              y: rest.y,
+              duration: durationOut * 0.375,
+              ease: easeOut,
+            })
+            .to(micro, {
+              scaleX: rest.scaleX * scaleOut,
+              scaleY: rest.scaleY / scaleOut,
+              duration: durationOut * 0.225,
+              ease: "power1.out",
+            })
+            .to(micro, {
+              scaleX: rest.scaleX,
+              scaleY: rest.scaleY,
+              duration: durationOut * 0.4,
+              ease: "power1.inOut",
+            });
+
+          if (!startWithCooldown && cooldown > 0) {
+            timeline.to({}, { duration: cooldown });
+          }
+
+          return timeline;
         },
-      });
-
-      if (startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
-      }
-
-      element.micro.anchorY = 0;
-
-      timeline
-        .to(element.micro, {
-          scaleX: scaleIn,
-          scaleY: 1 / scaleIn,
-          duration: durationIn * 0.5,
-          ease: "power1.inOut",
-        })
-        .to(element.micro, {
-          scaleX: 1 / scaleIn,
-          scaleY: scaleIn,
-          duration: durationIn * 0.25,
-          ease: "power1.inOut",
-        })
-        .to(element.micro, {
-          scaleX: 1,
-          scaleY: 1,
-          duration: durationIn * 0.25,
-          ease: "power1.inOut",
-        })
-        .to(
-          element.micro,
-          {
-            y: jumpHeight,
-            duration: durationIn * 0.375,
-            ease: easeIn,
-          },
-          durationIn * 0.625 + (startWithCooldown && cooldown > 0 ? cooldown : 0),
-        )
-        .to(element.micro, {
-          y: 0,
-          duration: durationOut * 0.375,
-          ease: easeOut,
-        })
-        .to(element.micro, {
-          scaleX: scaleOut,
-          scaleY: 1 / scaleOut,
-          duration: durationOut * 0.225,
-          ease: "power1.out",
-        })
-        .to(element.micro, {
-          scaleX: 1,
-          scaleY: 1,
-          duration: durationOut * 0.4,
-          ease: "power1.inOut",
-        });
-
-      if (!startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
-      }
-
-      jumpCallTweens.set(element, timeline);
+        onComplete,
+      );
     }
   }
 
   /**
-   * Stops the jumping animation and returns elements to rest position.
+   * Stops the jumping animation and returns elements to rest position and scale.
    * @param target - Single element or array of elements to stop animating
    * @param options - Stop animation configuration options
    */
   public static stopJump(
-    target: UIAnimatedElement | UIAnimatedElement[],
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
     options: Partial<UIJumpCallAnimatorStopOptions> = {},
   ): void {
     const { duration = DEFAULT_STOP_DURATION, ease = DEFAULT_STOP_EASE } = options;
-    const elements = Array.isArray(target) ? target : [target];
 
-    for (const element of elements) {
-      const tween = jumpCallTweens.get(element);
-
-      if (tween instanceof gsap.core.Timeline) {
-        tween.kill();
-        jumpCallTweens.delete(element);
-
-        gsap.to(element.micro, {
-          y: 0,
-          duration,
-          ease,
-        });
-      }
+    for (const element of resolveTargets(target)) {
+      jumpCalls.stop(element.micro, duration, ease);
     }
   }
 }

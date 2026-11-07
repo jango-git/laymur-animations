@@ -1,36 +1,7 @@
 {
   "name": "laymur-animations",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "description": "Common animations for the Laymur UI library",
-  "scripts": {
-    "clean": "rm -rf dist",
-    "build": "npm run clean && rollup -c",
-    "build:prod": "npm run clean && NODE_ENV=production rollup -c",
-    "prepublishOnly": "npm run build:prod"
-  },
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "development": "./dist/index.js",
-        "production": "./dist/index.min.js",
-        "default": "./dist/index.min.js"
-      },
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.min.js"
-      }
-    },
-    "./package.json": "./package.json"
-  },
-  "sideEffects": false,
   "keywords": [
     "laymur",
     "ui",
@@ -42,24 +13,39 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jango-git/laymur-animations.git"
+    "url": "git+https://github.com/jango-git/laymur-animations.git"
   },
   "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "peerDependencies": {
-    "laymur": ">=0.25.0 <0.26.0",
-    "gsap": ">=3.13.0 <4.0.0"
+    "gsap": ">=3.13.0 <4.0.0",
+    "laymur": ">=0.26.0 <0.27.0"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^16.0.1",
-    "@rollup/plugin-terser": "^0.4.4",
-    "@types/three": "^0.175.0",
+    "@types/three": "^0.157.0",
     "@typescript-eslint/eslint-plugin": "^8.32.0",
     "@typescript-eslint/parser": "^8.32.0",
     "eslint": "^9.26.0",
-    "rollup": "^4.40.2",
-    "rollup-plugin-typescript2": "^0.36.0",
-    "ts-transformer-minify-privates": "^1.0.0",
     "typescript": "^5.8.3"
-  },
-  "dependencies": {}
+  }
 }

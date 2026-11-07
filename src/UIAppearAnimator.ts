@@ -1,5 +1,12 @@
 import gsap from "gsap";
-import type { UIAnimatedElement } from "./UIAnimatedElement";
+import type { UIAnimatedElement } from "./UIAnimatedElement.js";
+import {
+  resolveTargets,
+  restoreMode,
+  settle,
+  stopVisibility,
+  trackVisibility,
+} from "./miscellaneous.js";
 
 const DEFAULT_X_FROM = 0;
 const DEFAULT_X_TO = 0;
@@ -10,6 +17,7 @@ const DEFAULT_SCALE_TO = 1;
 const DEFAULT_ALPHA_FROM = 0;
 const DEFAULT_ALPHA_TO = 1;
 const DEFAULT_DELAY = 0;
+const DEFAULT_STAGGER = 0;
 const DEFAULT_DURATION = 0.25;
 const DEFAULT_EASE = "back.out(1.7)";
 
@@ -37,6 +45,8 @@ export interface UIAppearAnimatorOptions {
 
   /** Animation delay in seconds */
   delay: number;
+  /** Delay between the starts of consecutive elements in seconds */
+  stagger: number;
   /** Animation duration in seconds */
   duration: number;
   /** GSAP easing function */
@@ -48,10 +58,12 @@ export interface UIAppearAnimatorOptions {
  */
 export class UIAppearAnimator {
   /**
-   * Animates elements appearing with position, scale, and alpha transitions.
+   * Animates elements appearing with position, scale, and alpha transitions. Replaces an
+   * appearance or disappearance running on the same element, and gives an element hidden by
+   * the disappear animator its mode back.
    * @param target - Single element or array of elements to animate
    * @param options - Animation configuration options
-   * @returns Promise that resolves when animation completes
+   * @returns Promise that resolves when animation completes or is interrupted
    */
   public static appear(
     target: UIAnimatedElement | UIAnimatedElement[],
@@ -67,11 +79,12 @@ export class UIAppearAnimator {
       alphaFrom = DEFAULT_ALPHA_FROM,
       alphaTo = DEFAULT_ALPHA_TO,
       delay = DEFAULT_DELAY,
+      stagger = DEFAULT_STAGGER,
       duration = DEFAULT_DURATION,
       ease = DEFAULT_EASE,
     } = options;
 
-    const elements = Array.isArray(target) ? target : [target];
+    const elements = resolveTargets(target);
     const colorTarget: Record<string, unknown> = {
       duration,
       ease: "power1.inOut",
@@ -80,37 +93,42 @@ export class UIAppearAnimator {
 
     if (xFrom !== xTo) {
       microTarget.x = xTo;
-      for (const element of elements) {
-        element.micro.x = xFrom;
-      }
     }
     if (yFrom !== yTo) {
       microTarget.y = yTo;
-      for (const element of elements) {
-        element.micro.y = yFrom;
-      }
     }
     if (scaleFrom !== scaleTo) {
       microTarget.scaleX = scaleTo;
       microTarget.scaleY = scaleTo;
-      for (const element of elements) {
-        element.micro.scaleX = scaleFrom;
-        element.micro.scaleY = scaleFrom;
-      }
     }
     if (alphaFrom !== alphaTo) {
       colorTarget.a = alphaTo;
-      for (const element of elements) {
-        element.color.a = alphaFrom;
-      }
     }
 
-    return new Promise((onComplete) => {
-      const timeline = gsap.timeline({ delay, onComplete });
+    const animations = elements.map((element, index) => {
+      stopVisibility(element);
+      restoreMode(element);
 
-      for (const element of elements) {
-        timeline.to(element.micro, microTarget, 0).to(element.color, colorTarget, 0);
+      if (xFrom !== xTo) {
+        element.micro.x = xFrom;
       }
+      if (yFrom !== yTo) {
+        element.micro.y = yFrom;
+      }
+      if (scaleFrom !== scaleTo) {
+        element.micro.scaleX = scaleFrom;
+        element.micro.scaleY = scaleFrom;
+      }
+      if (alphaFrom !== alphaTo) {
+        element.color.a = alphaFrom;
+      }
+
+      const timeline = gsap.timeline({ delay: delay + index * stagger });
+      timeline.to(element.micro, microTarget, 0).to(element.color, colorTarget, 0);
+      trackVisibility(element, timeline);
+      return settle(timeline);
     });
+
+    return Promise.all(animations).then(() => undefined);
   }
 }

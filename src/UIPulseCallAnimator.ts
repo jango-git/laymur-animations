@@ -1,9 +1,11 @@
 import gsap from "gsap";
-import type { UIAnimatedElement } from "./UIAnimatedElement";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+import { iterationsToRepeat, resolveTargets, UICallTracker } from "./miscellaneous.js";
 
-const pulseCallTweens = new WeakMap<UIAnimatedElement, gsap.core.Timeline>();
+const pulseCalls = new UICallTracker(["scaleX", "scaleY"]);
 
 const DEFAULT_SCALE = 1.1;
+const DEFAULT_BEATS = 1;
 const DEFAULT_ITERATIONS = -1;
 const DEFAULT_COOLDOWN = 3;
 const DEFAULT_START_WITH_COOLDOWN = true;
@@ -12,7 +14,6 @@ const DEFAULT_DURATION_OUT = 0.5;
 const DEFAULT_EASE_IN = "power1.inOut";
 const DEFAULT_EASE_OUT = "power1.inOut";
 
-const DEFAULT_STOP_SCALE = 1;
 const DEFAULT_STOP_DURATION = 0.25;
 const DEFAULT_STOP_EASE = "power1.inOut";
 
@@ -20,8 +21,10 @@ const DEFAULT_STOP_EASE = "power1.inOut";
  * Configuration options for pulse call animations.
  */
 export interface UIPulseCallAnimatorOptions {
-  /** Scale factor for pulse effect */
+  /** Scale factor for pulse effect, relative to the rest scale */
   scale: number;
+  /** Number of pulses in a row per iteration; 2 with short durations makes a heartbeat */
+  beats: number;
   /** Number of animation iterations (-1 for infinite) */
   iterations: number;
   /** Cooldown time between iterations in seconds */
@@ -36,13 +39,15 @@ export interface UIPulseCallAnimatorOptions {
   easeIn: gsap.EaseString;
   /** GSAP easing function for scale out */
   easeOut: gsap.EaseString;
+  /** Called once the call ends: completed, stopped or replaced by another pulse */
+  onComplete: () => void;
 }
 
 /**
  * Configuration options for stopping pulse animations.
  */
 export interface UIPulseCallAnimatorStopOptions {
-  /** Target scale value when stopping */
+  /** Target scale value when stopping; the rest scale by default */
   scale: number;
   /** Duration to return to rest scale in seconds */
   duration: number;
@@ -55,16 +60,18 @@ export interface UIPulseCallAnimatorStopOptions {
  */
 export class UIPulseCallAnimator {
   /**
-   * Starts a pulsing animation with scale effects.
+   * Starts a pulsing animation with scale effects. Replaces a pulse running on the same
+   * element; the scale it rests at is kept from the first one.
    * @param target - Single element or array of elements to animate
    * @param options - Animation configuration options
    */
   public static pulse(
-    target: UIAnimatedElement | UIAnimatedElement[],
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
     options: Partial<UIPulseCallAnimatorOptions> = {},
   ): void {
     const {
       scale = DEFAULT_SCALE,
+      beats = DEFAULT_BEATS,
       iterations = DEFAULT_ITERATIONS,
       cooldown = DEFAULT_COOLDOWN,
       startWithCooldown = DEFAULT_START_WITH_COOLDOWN,
@@ -72,41 +79,45 @@ export class UIPulseCallAnimator {
       durationOut = DEFAULT_DURATION_OUT,
       easeIn = DEFAULT_EASE_IN,
       easeOut = DEFAULT_EASE_OUT,
+      onComplete,
     } = options;
 
-    const elements = Array.isArray(target) ? target : [target];
+    for (const element of resolveTargets(target)) {
+      const micro = element.micro;
 
-    for (const element of elements) {
-      const timeline = gsap.timeline({
-        repeat: Number.isNaN(iterations) ? -1 : iterations,
-        onComplete: () => {
-          pulseCallTweens.delete(element);
+      pulseCalls.start(
+        micro,
+        (rest) => {
+          const timeline = gsap.timeline({ repeat: iterationsToRepeat(iterations) });
+
+          if (startWithCooldown && cooldown > 0) {
+            timeline.to({}, { duration: cooldown });
+          }
+
+          for (let beat = 0; beat < Math.max(beats, 1); beat++) {
+            timeline
+              .to(micro, {
+                scaleX: rest.scaleX * scale,
+                scaleY: rest.scaleY * scale,
+                duration: durationIn,
+                ease: easeIn,
+              })
+              .to(micro, {
+                scaleX: rest.scaleX,
+                scaleY: rest.scaleY,
+                duration: durationOut,
+                ease: easeOut,
+              });
+          }
+
+          if (!startWithCooldown && cooldown > 0) {
+            timeline.to({}, { duration: cooldown });
+          }
+
+          return timeline;
         },
-      });
-
-      if (startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
-      }
-
-      timeline
-        .to(element.micro, {
-          scaleX: scale,
-          scaleY: scale,
-          duration: durationIn,
-          ease: easeIn,
-        })
-        .to(element.micro, {
-          scaleX: element.micro.scaleX,
-          scaleY: element.micro.scaleY,
-          duration: durationOut,
-          ease: easeOut,
-        });
-
-      if (!startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
-      }
-
-      pulseCallTweens.set(element, timeline);
+        onComplete,
+      );
     }
   }
 
@@ -116,29 +127,18 @@ export class UIPulseCallAnimator {
    * @param options - Stop animation configuration options
    */
   public static stopPulse(
-    target: UIAnimatedElement | UIAnimatedElement[],
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
     options: Partial<UIPulseCallAnimatorStopOptions> = {},
   ): void {
-    const {
-      scale = DEFAULT_STOP_SCALE,
-      duration = DEFAULT_STOP_DURATION,
-      ease = DEFAULT_STOP_EASE,
-    } = options;
-    const elements = Array.isArray(target) ? target : [target];
+    const { scale, duration = DEFAULT_STOP_DURATION, ease = DEFAULT_STOP_EASE } = options;
 
-    for (const element of elements) {
-      const tween = pulseCallTweens.get(element);
-      if (tween instanceof gsap.core.Timeline) {
-        tween.kill();
-        pulseCallTweens.delete(element);
-
-        gsap.to(element.micro, {
-          scaleX: scale,
-          scaleY: scale,
-          duration,
-          ease,
-        });
-      }
+    for (const element of resolveTargets(target)) {
+      pulseCalls.stop(
+        element.micro,
+        duration,
+        ease,
+        scale === undefined ? {} : { scaleX: scale, scaleY: scale },
+      );
     }
   }
 }

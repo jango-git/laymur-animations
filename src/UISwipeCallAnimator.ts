@@ -1,7 +1,8 @@
 import gsap from "gsap";
-import type { UIAnimatedElement } from "./UIAnimatedElement";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+import { iterationsToRepeat, resolveTargets, UICallTracker } from "./miscellaneous.js";
 
-const swipeCallTweens = new WeakMap<UIAnimatedElement, gsap.core.Timeline>();
+const swipeCalls = new UICallTracker(["x", "y"]);
 
 const DEFAULT_DX = 25;
 const DEFAULT_DY = 0;
@@ -19,9 +20,9 @@ const DEFAULT_STOP_EASE = "power1.inOut";
  * Configuration options for swipe call animations.
  */
 export interface UISwipeCallAnimatorCallOptions {
-  /** Horizontal displacement of the swipe vector in pixels */
+  /** Horizontal displacement of the swipe vector in world units */
   dx: number;
-  /** Vertical displacement of the swipe vector in pixels */
+  /** Vertical displacement of the swipe vector in world units */
   dy: number;
   /** Number of animation iterations (-1 for infinite) */
   iterations: number;
@@ -35,6 +36,8 @@ export interface UISwipeCallAnimatorCallOptions {
   easeIn: gsap.EaseString;
   /** GSAP easing function for the return swipe */
   easeOut: gsap.EaseString;
+  /** Called once the call ends: completed, stopped or replaced by another swipe */
+  onComplete: () => void;
 }
 
 /**
@@ -52,12 +55,13 @@ export interface UISwipeCallAnimatorStopOptions {
  */
 export class UISwipeCallAnimator {
   /**
-   * Starts an infinite pingpong swipe animation along the vector (dx, dy).
+   * Starts a pingpong swipe animation along the vector (dx, dy) from the rest position.
+   * Replaces a swipe running on the same element.
    * @param target - Single element or array of elements to animate
    * @param options - Animation configuration options
    */
   public static swipe(
-    target: UIAnimatedElement | UIAnimatedElement[],
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
     options: Partial<UISwipeCallAnimatorCallOptions> = {},
   ): void {
     const {
@@ -69,41 +73,43 @@ export class UISwipeCallAnimator {
       duration = DEFAULT_DURATION,
       easeIn = DEFAULT_EASE_IN,
       easeOut = DEFAULT_EASE_OUT,
+      onComplete,
     } = options;
 
-    const elements = Array.isArray(target) ? target : [target];
+    for (const element of resolveTargets(target)) {
+      const micro = element.micro;
 
-    for (const element of elements) {
-      const timeline = gsap.timeline({
-        repeat: Number.isNaN(iterations) ? -1 : iterations,
-        onComplete: () => {
-          swipeCallTweens.delete(element);
+      swipeCalls.start(
+        micro,
+        (rest) => {
+          const timeline = gsap.timeline({ repeat: iterationsToRepeat(iterations) });
+
+          if (startWithCooldown && cooldown > 0) {
+            timeline.to({}, { duration: cooldown });
+          }
+
+          timeline
+            .to(micro, {
+              x: rest.x + dx,
+              y: rest.y + dy,
+              duration,
+              ease: easeIn,
+            })
+            .to(micro, {
+              x: rest.x,
+              y: rest.y,
+              duration,
+              ease: easeOut,
+            });
+
+          if (!startWithCooldown && cooldown > 0) {
+            timeline.to({}, { duration: cooldown });
+          }
+
+          return timeline;
         },
-      });
-
-      if (startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
-      }
-
-      timeline
-        .to(element.micro, {
-          x: element.micro.x + dx,
-          y: element.micro.y + dy,
-          duration,
-          ease: easeIn,
-        })
-        .to(element.micro, {
-          x: element.micro.x,
-          y: element.micro.y,
-          duration,
-          ease: easeOut,
-        });
-
-      if (!startWithCooldown && cooldown > 0) {
-        timeline.to({}, { duration: cooldown });
-      }
-
-      swipeCallTweens.set(element, timeline);
+        onComplete,
+      );
     }
   }
 
@@ -113,26 +119,13 @@ export class UISwipeCallAnimator {
    * @param options - Stop animation configuration options
    */
   public static stopSwipe(
-    target: UIAnimatedElement | UIAnimatedElement[],
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
     options: Partial<UISwipeCallAnimatorStopOptions> = {},
   ): void {
     const { duration = DEFAULT_STOP_DURATION, ease = DEFAULT_STOP_EASE } = options;
-    const elements = Array.isArray(target) ? target : [target];
 
-    for (const element of elements) {
-      const tween = swipeCallTweens.get(element);
-
-      if (tween instanceof gsap.core.Timeline) {
-        tween.kill();
-        swipeCallTweens.delete(element);
-
-        gsap.to(element.micro, {
-          x: 0,
-          y: 0,
-          duration,
-          ease,
-        });
-      }
+    for (const element of resolveTargets(target)) {
+      swipeCalls.stop(element.micro, duration, ease);
     }
   }
 }
