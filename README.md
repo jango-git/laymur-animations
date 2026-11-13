@@ -16,6 +16,23 @@ One-shot, returning a promise: UIAppearAnimator, UIDisappearAnimator, UIClickAni
 
 Calls, running until stopped: UIPulseCallAnimator, UIJumpCallAnimator, UISpinCallAnimator, UISwipeCallAnimator, UITapCallAnimator, UIFloatCallAnimator, UIShineCallAnimator
 
+## Button press
+
+`UIClickAnimator.bind` presses a button in while a finger holds it and releases it on the click or
+cancel that ends the press:
+
+```typescript
+import { UIClickAnimator } from "laymur-animations";
+
+const unbind = UIClickAnimator.bind(button);
+button.signalPointerClicked.on(onBuy);
+
+// Once the button is no longer needed
+unbind();
+```
+
+`UIClickAnimator.press` and `UIClickAnimator.release` do the same when driven by hand.
+
 ## Documentation
 
 See [Usage Example](https://jango-git.github.io/laymur/07_animations.html) for a concrete implementation demonstration.

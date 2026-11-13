@@ -1,6 +1,6 @@
 {
   "name": "laymur-animations",
-  "version": "0.26.0",
+  "version": "0.27.0",
   "description": "Common animations for the Laymur UI library",
   "keywords": [
     "laymur",
@@ -20,6 +20,8 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc -p tsconfig.json",
+    "lint": "eslint src",
+    "format": "prettier --write . && eslint src --fix",
     "prepublishOnly": "npm run build"
   },
   "main": "./dist/index.js",
@@ -39,13 +41,15 @@
   },
   "peerDependencies": {
     "gsap": ">=3.13.0 <4.0.0",
-    "laymur": ">=0.26.0 <0.27.0"
+    "laymur": ">=0.27.0 <0.28.0"
   },
   "devDependencies": {
     "@types/three": "^0.157.0",
-    "@typescript-eslint/eslint-plugin": "^8.32.0",
-    "@typescript-eslint/parser": "^8.32.0",
-    "eslint": "^9.26.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.1",
+    "@typescript-eslint/parser": "^8.72.1",
+    "eslint": "^10.14.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "prettier": "^3.9.10",
     "typescript": "^5.8.3"
   }
 }

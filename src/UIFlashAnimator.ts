@@ -1,4 +1,5 @@
 import gsap from "gsap";
+
 import { resolveTargets, settle } from "./miscellaneous.js";
 
 const flashes = new WeakMap<UIFlashElement, { rest: number; timeline: gsap.core.Timeline }>();

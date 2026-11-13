@@ -1,6 +1,7 @@
 import gsap from "gsap";
-import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+
 import { iterationsToRepeat, resolveTargets, UICallTracker } from "./miscellaneous.js";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
 
 const tapCalls = new UICallTracker(["x", "y", "scaleX", "scaleY", "anchorX", "anchorY"]);
 

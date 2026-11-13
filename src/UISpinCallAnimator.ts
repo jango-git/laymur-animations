@@ -1,6 +1,7 @@
 import gsap from "gsap";
-import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+
 import { iterationsToRepeat, resolveTargets, UICallTracker } from "./miscellaneous.js";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
 
 const spinCalls = new UICallTracker(["rotation", "anchorX", "anchorY"]);
 

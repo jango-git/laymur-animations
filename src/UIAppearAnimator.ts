@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import type { UIAnimatedElement } from "./UIAnimatedElement.js";
+
 import {
   resolveTargets,
   restoreMode,
@@ -7,6 +7,7 @@ import {
   stopVisibility,
   trackVisibility,
 } from "./miscellaneous.js";
+import type { UIAnimatedElement } from "./UIAnimatedElement.js";
 
 const DEFAULT_X_FROM = 0;
 const DEFAULT_X_TO = 0;

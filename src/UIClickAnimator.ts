@@ -1,7 +1,9 @@
 import gsap from "gsap";
-import type { UIMicro } from "laymur";
-import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+import type { UIDummy, UIInputEventData, UIMicro } from "laymur";
+import { UIMode } from "laymur";
+
 import { resolveTargets, UICallTracker } from "./miscellaneous.js";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
 
 const DEFAULT_X_OFFSET = 0;
 const DEFAULT_Y_OFFSET = -25;
@@ -42,6 +44,17 @@ function unlockHitArea(micro: UIMicro): void {
   }
 }
 
+/** Pressed values and press-in settings of a micro held by {@link UIClickAnimator.press} */
+interface UIPressState {
+  pressed: { x: number; y: number; scaleX: number; scaleY: number };
+  timeline: gsap.core.Timeline | undefined;
+  durationIn: number;
+  easeIn: gsap.EaseString;
+  keepHitArea: boolean;
+}
+
+const presses = new WeakMap<UIMicro, UIPressState>();
+
 /**
  * Configuration options for click animations.
  */
@@ -70,6 +83,31 @@ export interface UIClickAnimatorOptions {
    */
   keepHitArea: boolean;
 }
+
+/**
+ * Configuration options for holding an element pressed.
+ */
+export type UIClickAnimatorPressOptions = Pick<
+  UIClickAnimatorOptions,
+  "xOffset" | "yOffset" | "xScale" | "yScale" | "durationIn" | "easeIn" | "keepHitArea"
+>;
+
+/**
+ * Configuration options for releasing a pressed element.
+ */
+export type UIClickAnimatorReleaseOptions = Pick<UIClickAnimatorOptions, "durationOut" | "easeOut">;
+
+/**
+ * Configuration options for binding press feedback to the pointer.
+ */
+export type UIClickAnimatorBindOptions = UIClickAnimatorPressOptions &
+  UIClickAnimatorReleaseOptions;
+
+/**
+ * Element whose own presses drive the press feedback, such as any laymur UIElement.
+ */
+export type UIClickAnimatorBindElement = UIMicroAnimatedElement &
+  Pick<UIDummy, "signalPointerPressed" | "signalPointerClicked" | "signalPointerCancelled">;
 
 /**
  * Animator for click feedback effects.
@@ -142,5 +180,171 @@ export class UIClickAnimator {
     );
 
     return Promise.all(clicks).then(() => undefined);
+  }
+
+  /**
+   * Presses elements in and holds them there until {@link release}, relative to the transform
+   * they rest at. Does nothing to an element already held pressed.
+   * @param target - Single element or array of elements to press
+   * @param options - Press configuration options
+   */
+  public static press(
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
+    options: Partial<UIClickAnimatorPressOptions> = {},
+  ): void {
+    const {
+      xOffset = DEFAULT_X_OFFSET,
+      yOffset = DEFAULT_Y_OFFSET,
+      xScale = DEFAULT_X_SCALE,
+      yScale = DEFAULT_Y_SCALE,
+      durationIn = DEFAULT_DURATION_IN,
+      easeIn = DEFAULT_EASE_IN,
+      keepHitArea = DEFAULT_KEEP_HIT_AREA,
+    } = options;
+
+    for (const element of resolveTargets(target)) {
+      const micro = element.micro;
+      if (presses.has(micro)) {
+        continue;
+      }
+
+      const state: UIPressState = {
+        pressed: { x: 0, y: 0, scaleX: 1, scaleY: 1 },
+        timeline: undefined,
+        durationIn,
+        easeIn,
+        keepHitArea,
+      };
+      presses.set(micro, state);
+      if (keepHitArea) {
+        lockHitArea(micro);
+      }
+
+      clickCalls.start(
+        micro,
+        (rest) => {
+          state.pressed = {
+            x: rest.x + xOffset,
+            y: rest.y + yOffset,
+            scaleX: rest.scaleX * xScale,
+            scaleY: rest.scaleY * yScale,
+          };
+          // The endless empty tween keeps the call running while the element is held
+          state.timeline = gsap
+            .timeline()
+            .to(micro, { ...state.pressed, duration: durationIn, ease: easeIn })
+            .to({}, { duration: 1, repeat: -1 });
+          return state.timeline;
+        },
+        () => {
+          // Replaced by a click or killed from outside rather than released
+          if (presses.get(micro) === state) {
+            presses.delete(micro);
+            if (keepHitArea) {
+              unlockHitArea(micro);
+            }
+          }
+        },
+      );
+    }
+  }
+
+  /**
+   * Releases elements held by {@link press} back to rest. A press released before it is fully
+   * in finishes it first, so a quick tap still shows the whole click.
+   * @param target - Single element or array of elements to release
+   * @param options - Release configuration options
+   * @returns Promise that resolves when the elements are back at rest or interrupted
+   */
+  public static release(
+    target: UIMicroAnimatedElement | UIMicroAnimatedElement[],
+    options: Partial<UIClickAnimatorReleaseOptions> = {},
+  ): Promise<void> {
+    const { durationOut = DEFAULT_DURATION_OUT, easeOut = DEFAULT_EASE_OUT } = options;
+
+    const releases = resolveTargets(target).map(
+      (element) =>
+        new Promise<void>((resolve) => {
+          const micro = element.micro;
+          const state = presses.get(micro);
+          if (state === undefined) {
+            resolve();
+            return;
+          }
+          presses.delete(micro);
+          const remaining = Math.max(state.durationIn - (state.timeline?.time() ?? 0), 0);
+
+          clickCalls.start(
+            micro,
+            (rest) => {
+              const timeline = gsap.timeline();
+              if (remaining > 0) {
+                timeline.to(micro, { ...state.pressed, duration: remaining, ease: state.easeIn });
+              }
+              return timeline.to(micro, {
+                x: rest.x,
+                y: rest.y,
+                scaleX: rest.scaleX,
+                scaleY: rest.scaleY,
+                duration: durationOut,
+                ease: easeOut,
+              });
+            },
+            () => {
+              if (state.keepHitArea) {
+                unlockHitArea(micro);
+              }
+              resolve();
+            },
+          );
+        }),
+    );
+
+    return Promise.all(releases).then(() => undefined);
+  }
+
+  /**
+   * Drives the press feedback by the pointer: the element is pressed while a pointer holds it
+   * and released on the click or cancel that ends every press it catches. Presses passed
+   * through by INTERACTIVE_TRANSPARENT elements, which end with neither, are ignored.
+   * @param element - Element to bind
+   * @param options - Press and release configuration options
+   * @returns Function that unbinds the element, releasing it if held
+   */
+  public static bind(
+    element: UIClickAnimatorBindElement,
+    options: Partial<UIClickAnimatorBindOptions> = {},
+  ): () => void {
+    const pointers = new Set<number>();
+
+    const onPressed = (event: UIInputEventData): void => {
+      if (event.element.mode !== UIMode.INTERACTIVE) {
+        return;
+      }
+      pointers.add(event.identifier);
+      if (pointers.size === 1) {
+        UIClickAnimator.press(element, options);
+      }
+    };
+
+    const onEnded = (event: UIInputEventData): void => {
+      if (pointers.delete(event.identifier) && pointers.size === 0) {
+        void UIClickAnimator.release(element, options);
+      }
+    };
+
+    element.signalPointerPressed.on(onPressed);
+    element.signalPointerClicked.on(onEnded);
+    element.signalPointerCancelled.on(onEnded);
+
+    return (): void => {
+      element.signalPointerPressed.off(onPressed);
+      element.signalPointerClicked.off(onEnded);
+      element.signalPointerCancelled.off(onEnded);
+      if (pointers.size > 0) {
+        pointers.clear();
+        void UIClickAnimator.release(element, options);
+      }
+    };
   }
 }

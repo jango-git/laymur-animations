@@ -1,7 +1,8 @@
 import gsap from "gsap";
 import type { UIColor, UIMicro } from "laymur";
-import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+
 import { resolveTargets, settle } from "./miscellaneous.js";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
 
 const flights = new WeakMap<UIMicro, gsap.core.Timeline>();
 

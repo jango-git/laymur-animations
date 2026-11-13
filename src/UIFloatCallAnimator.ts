@@ -1,6 +1,7 @@
 import gsap from "gsap";
-import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+
 import { resolveTargets, UICallTracker } from "./miscellaneous.js";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
 
 const floatCalls = new UICallTracker(["y", "rotation"]);
 

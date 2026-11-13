@@ -1,6 +1,7 @@
 import gsap from "gsap";
 import type { UIMicro } from "laymur";
 import { UIMode } from "laymur";
+
 import type { UIAnimatedElement } from "./UIAnimatedElement.js";
 
 /** Micro transform properties an animator may own */

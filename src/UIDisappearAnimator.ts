@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import type { UIAnimatedElement } from "./UIAnimatedElement.js";
+
 import {
   hideElement,
   isVisibilityTracked,
@@ -8,6 +8,7 @@ import {
   stopVisibility,
   trackVisibility,
 } from "./miscellaneous.js";
+import type { UIAnimatedElement } from "./UIAnimatedElement.js";
 
 const DEFAULT_DELAY = 0;
 const DEFAULT_STAGGER = 0;

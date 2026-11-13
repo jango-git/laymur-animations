@@ -1,7 +1,8 @@
 import gsap from "gsap";
 import type { UIMicro } from "laymur";
-import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
+
 import { iterationsToRepeat, resolveTargets, UICallTracker } from "./miscellaneous.js";
+import type { UIMicroAnimatedElement } from "./UIAnimatedElement.js";
 
 const shineCalls = new UICallTracker(["x", "y"]);
 
