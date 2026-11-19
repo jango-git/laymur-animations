@@ -4,6 +4,18 @@ Every notable change to laymur-animations. Versions follow semver; while the maj
 release may break the API. The minor version matches the laymur minor the release is made for.
 Breaking changes are marked.
 
+## 0.29.0 - 2026-11-19
+
+### Changed
+
+- **Breaking:** requires laymur 0.29 (`>=0.29.0 <0.30.0`).
+
+## 0.28.0 - 2026-11-19
+
+### Changed
+
+- **Breaking:** requires laymur 0.28 (`>=0.28.0 <0.29.0`).
+
 ## 0.27.0 - 2026-11-13
 
 ### Changed

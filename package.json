@@ -1,6 +1,6 @@
 {
   "name": "laymur-animations",
-  "version": "0.27.0",
+  "version": "0.29.0",
   "description": "Common animations for the Laymur UI library",
   "keywords": [
     "laymur",
@@ -9,13 +9,31 @@
     "three.js",
     "gsap"
   ],
-  "author": "jango",
-  "license": "MIT",
+  "homepage": "https://github.com/jango-git/laymur-animations#readme",
+  "bugs": {
+    "url": "https://github.com/jango-git/laymur-animations/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jango-git/laymur-animations.git"
   },
+  "license": "MIT",
+  "author": "jango",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "sideEffects": false,
   "scripts": {
     "clean": "rm -rf dist",
@@ -24,24 +42,9 @@
     "format": "prettier --write . && eslint src --fix",
     "prepublishOnly": "npm run build"
   },
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./package.json": "./package.json"
-  },
   "peerDependencies": {
     "gsap": ">=3.13.0 <4.0.0",
-    "laymur": ">=0.27.0 <0.28.0"
+    "laymur": ">=0.29.0 <0.30.0"
   },
   "devDependencies": {
     "@types/three": "^0.157.0",
