@@ -1,6 +1,6 @@
 {
   "name": "laymur-animations",
-  "version": "0.29.0",
+  "version": "0.30.0",
   "description": "Common animations for the Laymur UI library",
   "keywords": [
     "laymur",
@@ -44,7 +44,7 @@
   },
   "peerDependencies": {
     "gsap": ">=3.13.0 <4.0.0",
-    "laymur": ">=0.29.0 <0.30.0"
+    "laymur": ">=0.29.0 <0.31.0"
   },
   "devDependencies": {
     "@types/three": "^0.157.0",

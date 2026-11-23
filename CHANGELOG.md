@@ -4,6 +4,12 @@ Every notable change to laymur-animations. Versions follow semver; while the maj
 release may break the API. The minor version matches the laymur minor the release is made for.
 Breaking changes are marked.
 
+## 0.30.0 - 2026-11-23
+
+### Changed
+
+- Supports laymur 0.30. The laymur peer range is `>=0.29.0 <0.31.0`.
+
 ## 0.29.0 - 2026-11-19
 
 ### Changed
