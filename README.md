@@ -10,6 +10,12 @@ A collection of common UI animations for Laymur UI library. Includes popular ani
 npm install laymur-animations gsap
 ```
 
+### Private members
+
+The published code prefixes class members outside the API with `_private_`. A minifier shortens
+them when given the prefix: terser `mangle: { properties: { regex: /^_private_/ } }`, esbuild
+`--mangle-props=^_private_`.
+
 ## Animations
 
 One-shot, returning a promise: UIAppearAnimator, UIDisappearAnimator, UIClickAnimator, UIShakeAnimator, UIFlyToAnimator, UIFlashAnimator
