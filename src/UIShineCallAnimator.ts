@@ -52,7 +52,7 @@ export interface UIShineCallAnimatorCallOptions {
  * of the button and clipped by a mask following the button:
  *
  * ```ts
- * const shine = new UIImage(layer, bandTexture, { mask: new UIMask(button) });
+ * const shine = new UIImage(layer, bandTexture, { mask: new UIShapeMask(button) });
  * UIShineCallAnimator.shine(shine, { dx: button.width * 1.5 });
  * ```
  *

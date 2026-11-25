@@ -1,12 +1,14 @@
 # Changelog
 
 Every notable change to laymur-animations. Versions follow semver; while the major is 0, a minor
-release may break the API. The minor version matches the laymur minor the release is made for.
-Breaking changes are marked.
+release may break the API. A release that only widens the laymur peer range is a patch. Breaking
+changes are marked.
 
-## Unreleased
+## 0.30.1 - 2026-11-25
 
 ### Changed
+
+- Supports laymur 0.27 to 0.31. The laymur peer range is `>=0.27.0 <0.32.0`.
 
 - `private` class members and members marked `@internal` are emitted with a `_private_` prefix,
   so that a minifier can shorten them. Add a property mangling rule for the prefix to the
